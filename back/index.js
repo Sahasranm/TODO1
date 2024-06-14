@@ -6,7 +6,11 @@ app.use(express.json())
 app.use(cors())
 const mongoose=require('mongoose')
 const User=require('./models/userModel')
+const Task = require("./models/TaskModel")
 mongoose.connect(process.env.MONGO_URL).then(()=>console.log("DB connected")).catch(err=>console.log(err))
+app.post('/',(req,res)=>{
+Task.create(req.body).then(result=>res.json(result)).catch(err=>res.json(err))
+})
 app.post('/register',(req,res)=>{
     User.create(req.body).then(result=>res.json(result)).catch(err=>res.json(err))
 })
