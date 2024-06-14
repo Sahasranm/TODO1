@@ -11,6 +11,18 @@ mongoose.connect(process.env.MONGO_URL).then(()=>console.log("DB connected")).ca
 app.post('/',(req,res)=>{
 Task.create(req.body).then(result=>res.json(result)).catch(err=>res.json(err))
 })
+app.get('/',(req,res)=>{
+    Task.find({}).then(result=>res.json(result)).catch(err=>res.json(err))
+    
+})
+app.put('/',(req,res)=>{
+    const {id,newtitle,description}=req.body;
+    Task.findByIdAndUpdate(id,{task:title,description:description}).then(result=>{
+        if(!result){
+
+        }
+    })
+})
 app.post('/register',(req,res)=>{
     User.create(req.body).then(result=>res.json(result)).catch(err=>res.json(err))
 })
