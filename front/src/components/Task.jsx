@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { AiOutlineDelete,AiOutlineEdit } from "react-icons/ai";
 import { BsCheck } from "react-icons/bs";
 import axios from 'axios'
+import '../App.css';
 const Task = () => {
   const [isCompleteScreen, setIsCompleteScreen] = useState(false);
   const [Todos, setTodos] = useState([]);
@@ -13,16 +14,16 @@ const Task = () => {
   const [task,setTask]=useState()
 const [description,setDescription]=useState()
   const handleAddTodo = () => {
-        axios.post('http://localhost:3000/',{task,description}).then(result=>console.log(result))
+        axios.post('http://localhost:3000/todo',{task,description}).then(result=>console.log(result))
         .catch(err=>console.log(err))
   };
 
-  const handleDeleteTodo = index =>{
+  const handleDeleteTodo = (id) =>{
     let reducedTodo =[...Todos];
-    //to delete one item that matches the index
-    reducedTodo.splice(index,1);
-    localStorage.setItem('todolist',JSON.stringify(reducedTodo));
-    setTodos(reducedTodo)
+    axios.delete(`http://localhost:3000/todo/${id}`).then(result=>{console.log(result)
+        console.log(id)
+    })
+    .catch(err=>console.log(err))
   };
  
   const handleComplete = index =>{
@@ -43,13 +44,13 @@ const [description,setDescription]=useState()
     let updatedCompletedArr = [...completedTodos];
     updatedCompletedArr.push(filteredItem);
     setCompletedTodos(updatedCompletedArr);
-    handleDeleteTodo(index);
+    handleDeleteTodo(Todos[index]._id);
     localStorage.setItem('completedTodos',JSON.stringify(updatedCompletedArr));
   };
 
   const handleDeleteCompletedTodo = index => {
     let reducedTodo =[...completedTodos];
-    reducedTodo.splice(index);
+    reducedTodo.splice(Todos[index]._id);
     localStorage.setItem('completedTodos',JSON.stringify(reducedTodo));
     setCompletedTodos(reducedTodo);
   }
@@ -58,7 +59,7 @@ const [description,setDescription]=useState()
   //checking whether locastorage has item or not
 
 useEffect(()=>{
-    axios.get("http://localhost:3000/").then(result=>setTodos(result.data))
+    axios.get("http://localhost:3000/todo").then(result=>setTodos(result.data))
 })
   const handleEdit = (ind,item)=>{
     
@@ -69,19 +70,33 @@ useEffect(()=>{
   const handleUpdateTitle = (value)=>{
      setcurrentEditedItem((prev)=>{
       return {...prev,title:value}
+     
      })
   }
 
   const handleUpdateDescription = (value)=>{
     setcurrentEditedItem((prev)=>{
       return {...prev,description:value}
-    })
-    axios.put("http://localhost:3000/",{value})
+    
+     })
   }
   
-  const handleUpdateToDo = (id)=>{
-     axios.put("http://localhost:3000/",{id})
-  }
+  const handleUpdateToDo = (id) => {
+    axios.put(`http://localhost:3000/todo/${id}`, { task: currentEditedItem.title, description: currentEditedItem.description })
+      .then(res => {
+        console.log('Todo updated successfully:', res.data);
+        
+        const updatedTodos = Todos.map(todo => {
+          if (todo._id === res.data._id) {
+            return res.data; 
+          }
+          return todo; 
+        });
+        setTodos(updatedTodos);
+        setcurrentEdit(-1); 
+      })
+      .catch(err => console.error('Error updating todo:', err));
+  };
 
   return (
     <div className="App">
@@ -118,7 +133,7 @@ useEffect(()=>{
                <div className='edit__wrapper' key={index}>
               <input placeholder='Updated Title' onChange={(e)=>handleUpdateTitle(e.target.value)} value={currentEditedItem.title}/>
               <textarea placeholder='Updated Title' rows={4} onChange={(e)=>handleUpdateDescription(e.target.value)} value={currentEditedItem.description}/>
-              <button type="button" onClick={handleUpdateToDo(item._id)} className='primaryBtn'>Update</button>
+              <button type="button" onClick={()=>handleUpdateToDo(item._id)} className='primaryBtn'>Update</button>
               </div>
             )
            } 
@@ -127,11 +142,11 @@ useEffect(()=>{
             return (
               <div className='todo-list-item' key={index}>
                 <div>
-                  <h1>{item.title}</h1>
+                  <h1>{item.task}</h1>
                   <p>{item.description}</p>
                 </div>
                 <div>
-                  <AiOutlineDelete className='icon' onClick={()=>handleDeleteTodo(index) } title='delete?'/>
+                  <AiOutlineDelete className='icon' onClick={()=>handleDeleteTodo(item._id) } title='delete?'/>
                   <BsCheck className='check-icon' onClick={()=>handleComplete(index)}/>
                   <AiOutlineEdit className='check-icon' onClick={()=>handleEdit(index,item) } title='Edit?'/>
                 </div>
@@ -144,14 +159,14 @@ useEffect(()=>{
             return (
               <div className='todo-list-item' key={index}>
                 <div>
-                  <h1>{item.title}</h1>
+                
+                  <h1>{item.task}</h1>
                   <p>{item.description}</p>
                   <p><small>Completed on: {item.completedOn}</small></p>
-                </div>
-                <div>
-                  <AiOutlineDelete className='icon' onClick={()=>handleDeleteCompletedTodo(index) } title='delete?'/>
-                </div>
-              </div>
+
+                </div><BsCheck className='icon' onClick={() => handleDeleteCompletedTodo(item._id)}  />
+                
+                              </div>
             )
           })}
 
